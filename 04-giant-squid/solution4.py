@@ -4,6 +4,7 @@
 class Board:
 
     def __init__(self, numbers: []):
+        """Each board is made from parm list containing 5 strings of space separated numbers."""
         self.completed = False
 
         # def cartesian_to_grid(x, y): return y * 5 + x
@@ -19,20 +20,20 @@ class Board:
             num_list = row.split(' ')
             while len(num_list) > 0:
                 possible_num = num_list.pop(0)
-                if possible_num != '':                          # Sometimes there are double spaces between numbers.
+                if possible_num != '':                  # Sometimes there are double spaces between numbers.
                     self.grid[g] = possible_num
                     g += 1
 
     def is_winner(self) -> bool:
-        """Returns True if the board has either a complete row or a complete column."""
+        """Returns True if the board has either a completed row or a completed column."""
         for i in range(5):
-            row_fail, col_fail = False, False           # Assume both row & column about to be checked are winners.
+            row_win, col_win = True, True               # Assume both row & column about to be checked are winners.
             for j in range(5):
                 if self.grid[i * 5 + j] != '*':
-                    col_fail = True
+                    col_win = False
                 if self.grid[i + j * 5] != '*':
-                    row_fail = True
-            if not row_fail or not col_fail:
+                    row_win = False
+            if row_win or col_win:
                 self.completed = True
                 return True
         return False
@@ -63,17 +64,17 @@ boards = []
 while len(r) > 0:
     r.pop(0)                                    # Discard the blank line between each board.
 
-    five_rows = []
-    while len(five_rows) < 5:
-        five_rows.append(r.pop(0))
+    five_strings = []                           # Each board is created from a list of 5 strings.
+    while len(five_strings) < 5:
+        five_strings.append(r.pop(0))
 
-    boards.append(Board(five_rows))
+    boards.append(Board(five_strings))
 
-winner_count = 0
+winner_count = 0                                # No winners at the start.
 while winner_count < len(boards):               # Loop until all boards completed.
     drawn = selections.pop(0)
     for b in boards:
-        if not b.completed:
+        if b.completed is False:
             b.mark(drawn)
             if b.is_winner():
                 winner_count += 1
