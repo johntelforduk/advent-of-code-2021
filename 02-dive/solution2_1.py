@@ -6,7 +6,7 @@ t = f.read()
 f.close()
 
 h, d = 0, 0
-for [command, units_raw] in [r.split(' ') for r in t.split('\n')]:
+for command, units_raw in [line.split() for line in t.split('\n')]:
     units = int(units_raw)
 
     if command == 'down':
