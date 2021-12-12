@@ -5,6 +5,7 @@ Solutions to Advent of Code 2021 puzzles.
 ```commandline
 pip install pygame
 pip install matplotlib
+pip install imageio
 ```
 ## Day 5: Hydrothermal Venture
 Visualisation of part 2.
@@ -15,3 +16,8 @@ Visualisation of part 2.
 Render of the floor of the sea.
 
 ![Day 9](./09-smoke-basin/aoc9.png)
+
+## Day 11: Dumbo Octopus
+Animation of part 1.
+
+![Day 11, part 1](./11-dumbo-octopus/screenshots/day11.gif)
