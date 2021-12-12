@@ -1,4 +1,4 @@
-# Solution to day1 of AOC 2021, Dumbo Octopus
+# Solution to part 1 of day 11 of AOC 2021, Dumbo Octopus
 # https://adventofcode.com/2021/day/11
 
 import pygame
