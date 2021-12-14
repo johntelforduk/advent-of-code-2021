@@ -1,6 +1,5 @@
-# Solution to day 12 of AOC 2021, Passage Pathing
+# Solution to part 1 of day 12 of AOC 2021, Passage Pathing
 # https://adventofcode.com/2021/day/12
-
 
 def search(current_cave: str, visited: list):
     global all_routes
