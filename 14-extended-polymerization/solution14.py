@@ -48,9 +48,9 @@ def next_step(poly_pairs: dict, pair_rules: dict) -> dict:
 
 def pairs_to_counts(original_poly: str, poly_pairs: dict) -> dict:
     """For parm dictionary of polymer pairs, return dictionary of counts of each elements letter.
-    Most letters are 'double counted'. Eg. 'B' is in the pairs 'BC' and 'CD'. Except the first and last letters of the
-    original polymer. In this example, 'A' is in 'AB' only. So count all the letters, add 1 extra to count for first
-    and last letters of original polymer, then divide all counts by 2."""
+    Most letters are 'double counted'. For example, consider the polymer 'ABC'. 'B' is in the pairs 'AB' and 'BC'.
+    Except the first and last letters of the original polymer. In this example, 'A' is in 'AB' only. So count all the
+    letters, add 1 extra to count for first and last letters of original polymer, then divide all counts by 2."""
 
     counts = {}
     for pair in poly_pairs:
