@@ -1,6 +1,8 @@
 # Solution to part 1 of day 15 of AOC 2021, Chiton
 # https://adventofcode.com/2021/day/15
 
+# This is a depth first recursive search.
+
 def find_least_risk(current: tuple, goal: tuple, visited: list, total_risk: int):
 
     global best
@@ -24,8 +26,6 @@ def find_least_risk(current: tuple, goal: tuple, visited: list, total_risk: int)
 
     # Abandon paths that have greater total risk than previous best found.
     if current in best and best[current] <= total_risk:
-        if current == (cavern_x, cavern_y):
-            print(best[current])
         return
 
     # Exciting times... this is the best path to this coordinate so far!
@@ -33,6 +33,7 @@ def find_least_risk(current: tuple, goal: tuple, visited: list, total_risk: int)
 
     # Great! We've reached the end.
     if current == goal:
+        print(best[current])
         return
 
     # Let's continue the search.
@@ -64,5 +65,3 @@ cavern_y -= 1
 cavern[(0, 0)] = 0
 
 find_least_risk(current=(0, 0), goal=(cavern_x, cavern_y), visited=[], total_risk=0)
-
-print(best[(cavern_x, cavern_y)])
