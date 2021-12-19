@@ -3,7 +3,6 @@
 
 import sys
 
-
 cavern, best = {}, {}
 
 f = open('input.txt')
@@ -18,8 +17,6 @@ for row in t.split('\n'):
         cavern_x += 1
     cavern_y += 1
 
-
-
 new_cavern = {}
 for x, y in cavern:
     num = cavern[x, y]
@@ -27,12 +24,10 @@ for x, y in cavern:
     for cy in range(5):
         next_num = row_start
         for cx in range(5):
-            # print(next_num, end='')
             new_cavern[cx * cavern_x + x, cy * cavern_y + y] = next_num
             next_num += 1
             if next_num == 10:
                 next_num = 1
-        # print()
         row_start += 1
         if row_start == 10:
             row_start = 1
@@ -41,9 +36,6 @@ cavern = new_cavern.copy()
 cavern_x *= 5
 cavern_y *= 5
 
-
-
-
 # Fix a gatepost error.
 cavern_x -= 1
 cavern_y -= 1
@@ -51,10 +43,11 @@ cavern_y -= 1
 source = (0, 0)
 cavern[source] = 0
 
+# Implemented pseudo code from, https://en.wikipedia.org/wiki/Dijkstra%27s_algorithm
 # function Dijkstra(Graph, source):
 #
 # create vertex set Q
-q, dist, prev = [], {}, {}
+q, dist, prev = {}, {}, {}
 # for each vertex v in Graph:
 for v in cavern:
     # dist[v] ← INFINITY
@@ -62,7 +55,7 @@ for v in cavern:
     # prev[v] ← UNDEFINED
     prev[v] = None
     # add v to Q
-    q.append(v)
+    q[v] = dist[v]
 # dist[source] ← 0
 dist[source] = 0
 
@@ -72,19 +65,10 @@ while len(q) is not 0:
     print('len(q):', len(q))
 
     # u ← vertex in Q with min dist[u]
-    print(len(q), len(dist))
-    u = None
-    shortest = sys.maxsize
-    for coords in q:
-        if dist[coords] < shortest:
-            shortest = dist[coords]
-            u = coords
-
-    # x = min(dist, key=dist.get)
-    # print(x)
+    u = min(q, key=q.get)
 
     # remove u from Q
-    q.remove(u)
+    del q[u]
 
     # for each neighbor v of u still in Q:
     x, y = u
@@ -99,19 +83,11 @@ while len(q) is not 0:
             if alt < dist[v]:
                 # dist[v] ← alt
                 dist[v] = alt
+                if v in q:
+                    q[v] = alt
                 # prev[v] ← u
                 prev[v] = u
 
 # return dist[], prev[]
 
-
-
-
-# print()
-# for py in range(cavern_y):
-#     for px in range(cavern_x):
-#         print(cavern[(px, py)], end='')
-#     print()
-
-# print(dist)
 print(dist[cavern_x, cavern_y])
