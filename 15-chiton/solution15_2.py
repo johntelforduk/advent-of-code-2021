@@ -6,7 +6,7 @@ import sys
 
 cavern, best = {}, {}
 
-f = open('test.txt')
+f = open('input.txt')
 t = f.read()
 f.close()
 
@@ -17,6 +17,32 @@ for row in t.split('\n'):
         cavern[cavern_x, cavern_y] = int(risk)
         cavern_x += 1
     cavern_y += 1
+
+
+
+new_cavern = {}
+for x, y in cavern:
+    num = cavern[x, y]
+    row_start = num
+    for cy in range(5):
+        next_num = row_start
+        for cx in range(5):
+            # print(next_num, end='')
+            new_cavern[cx * cavern_x + x, cy * cavern_y + y] = next_num
+            next_num += 1
+            if next_num == 10:
+                next_num = 1
+        # print()
+        row_start += 1
+        if row_start == 10:
+            row_start = 1
+
+cavern = new_cavern.copy()
+cavern_x *= 5
+cavern_y *= 5
+
+
+
 
 # Fix a gatepost error.
 cavern_x -= 1
@@ -43,13 +69,19 @@ dist[source] = 0
 # while Q is not empty:
 while len(q) is not 0:
 
+    print('len(q):', len(q))
+
     # u ← vertex in Q with min dist[u]
+    print(len(q), len(dist))
     u = None
     shortest = sys.maxsize
     for coords in q:
         if dist[coords] < shortest:
             shortest = dist[coords]
             u = coords
+
+    # x = min(dist, key=dist.get)
+    # print(x)
 
     # remove u from Q
     q.remove(u)
@@ -74,26 +106,6 @@ while len(q) is not 0:
 
 
 
-# new_cavern = {}
-# for x, y in cavern:
-#     num = cavern[x, y]
-#     row_start = num
-#     for cy in range(5):
-#         next_num = row_start
-#         for cx in range(5):
-#             # print(next_num, end='')
-#             new_cavern[cx * cavern_x + x, cy * cavern_y + y] = next_num
-#             next_num += 1
-#             if next_num == 10:
-#                 next_num = 1
-#         # print()
-#         row_start += 1
-#         if row_start == 10:
-#             row_start = 1
-#
-# cavern = new_cavern.copy()
-# cavern_x *= 5
-# cavern_y *= 5
 
 # print()
 # for py in range(cavern_y):
