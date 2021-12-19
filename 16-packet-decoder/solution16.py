@@ -6,7 +6,7 @@ def slicer(s: str, slice_pos: int) -> tuple:
     return s[0:slice_pos], s[slice_pos:]
 
 
-def decode(bits: str) -> str:
+def decode(bits: str) -> (str, int):
     global VERSION_SUM
 
     print()
@@ -38,12 +38,15 @@ def decode(bits: str) -> str:
         literal_value = int(literal_value_raw, 2)
         print('  literal_value:', literal_value)
 
+        return bits, literal_value
         # # The three unlabeled 0 bits at the end are extra due to the hexadecimal representation and should be ignored.
         # _, bits = slicer(bits, 3)
 
     # Every other type of packet (any packet with a type ID other than 4) represent an operator...
     else:
         length_type_id, bits = slicer(bits, 1)
+
+        operands = []
 
         # If the length type ID is 0, then the next 15 bits are a number that represents the total length in bits of the
         # sub-packets contained by this packet.
@@ -55,7 +58,8 @@ def decode(bits: str) -> str:
             sub_packet, bits = slicer(bits, sub_packet_length)
             print('sub_packet:', sub_packet)
             while len(sub_packet) > 0:
-                sub_packet = decode(sub_packet)
+                sub_packet, number = decode(sub_packet)
+                operands.append(number)
 
         # If the length type ID is 1, then the next 11 bits are a number that represents the number of sub-packets
         # immediately contained by this packet.
@@ -66,12 +70,63 @@ def decode(bits: str) -> str:
             print('num_of_sub_packets:', num_of_sub_packets)
 
             for sub_packet_iterations in range(num_of_sub_packets):
-                bits = decode(bits)
+                bits, number = decode(bits)
+                operands.append(number)
 
-    return bits
+        print('operands:', operands)
+
+        # Packets with type ID 0 are sum packets - their value is the sum of the values of their sub-packets. If they
+        # only have a single sub-packet, their value is the value of the sub-packet.
+        if packet_type_id == 0:
+            return bits, sum(operands)
+
+        # Packets with type ID 1 are product packets - their value is the result of multiplying together the values of
+        # their sub-packets. If they only have a single sub-packet, their value is the value of the sub-packet.
+        elif packet_type_id == 1:
+            product = 1
+            for term in operands:
+                product *= term
+            return bits, product
+
+        # Packets with type ID 2 are minimum packets - their value is the minimum of the values of their sub-packets.
+        elif packet_type_id == 2:
+            return bits, min(operands)
+
+        # Packets with type ID 3 are maximum packets - their value is the maximum of the values of their sub-packets.
+        if packet_type_id == 3:
+            return bits, max(operands)
+
+        # Packets with type ID 5 are greater than packets - their value is 1 if the value of the first sub-packet is
+        # greater than the value of the second sub-packet; otherwise, their value is 0. These packets always have
+        # exactly two sub-packets.
+        if packet_type_id == 5:
+            if operands[0] > operands[1]:
+                return bits, 1
+            else:
+                return bits, 0
+
+        # Packets with type ID 6 are less than packets - their value is 1 if the value of the first sub-packet is less
+        # than the value of the second sub-packet; otherwise, their value is 0. These packets always have exactly two
+        # sub-packets.
+        if packet_type_id == 6:
+            if operands[0] < operands[1]:
+                return bits, 1
+            else:
+                return bits, 0
+
+        # Packets with type ID 7 are equal to packets - their value is 1 if the value of the first sub-packet is equal
+        # to the value of the second sub-packet; otherwise, their value is 0. These packets always have exactly two
+        # sub-packets.
+        if packet_type_id == 7:
+            if operands[0] == operands[1]:
+                return bits, 1
+            else:
+                return bits, 0
+
+    return bits, 0
 
 
-def decode_hex(h: str) -> str:
+def decode_hex(h: str) -> int:
     h_to_b = {'0': '0000', '1': '0001', '2': '0010', '3': '0011', '4': '0100', '5': '0101', '6': '0110', '7': '0111',
               '8': '1000', '9': '1001', 'A': '1010', 'B': '1011', 'C': '1100', 'D': '1101', 'E': '1110', 'F': '1111'}
 
@@ -79,7 +134,9 @@ def decode_hex(h: str) -> str:
     for digit in h:
         start_bits += h_to_b[digit]
 
-    return decode(start_bits)
+    # Discard the leftover, un-parsed string.
+    _, result = decode(start_bits)
+    return result
 
 
 assert slicer(s='123456789', slice_pos=2) == ('12', '3456789')
@@ -100,12 +157,21 @@ VERSION_SUM = 0
 decode_hex('A0016C880162017C3686B18A3D4780')
 assert VERSION_SUM == 31
 
+assert decode_hex('D2FE28') == 2021
+assert decode_hex('C200B40A82') == 3
+assert decode_hex('04005AC33890') == 54
+assert decode_hex('880086C3E88112') == 7
+assert decode_hex('CE00C43D881120') == 9
+assert decode_hex('D8005AC2A8F0') == 1
+assert decode_hex('F600BC2D8F') == 0
+assert decode_hex('9C005AC2F8F0') == 0
+assert decode_hex('9C0141080250320F1802104A08') == 1
+
 f = open('input.txt')
-hex_str = f.read()
+t = f.read()
 f.close()
 
-print('hex:', hex_str)
 VERSION_SUM = 0
-left_over_bits = decode_hex(hex_str)
-print('left_over_bits', left_over_bits)
-print('VERSION_SUM:', VERSION_SUM)
+part2 = decode_hex(t)
+print('Part 1:', VERSION_SUM)
+print('Part 2:', part2)
