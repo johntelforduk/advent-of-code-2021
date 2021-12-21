@@ -2,6 +2,8 @@
 # https://adventofcode.com/2021/day/18
 
 import json
+from itertools import permutations
+
 
 def str_to_list(s: str) -> list:
     """For the parm list, return the equivalent string."""
@@ -31,8 +33,8 @@ def str_to_list(s: str) -> list:
     return elements
 
 
-def list_to_str(l: list) -> str:
-    return (str(l)).replace(' ', '')
+def list_to_str(parm_list: list) -> str:
+    return (str(parm_list)).replace(' ', '')
 
 
 def first_num(s: str) -> (int, int):
@@ -58,7 +60,7 @@ def last_num(s: str) -> (int, int):
     start, end = first_num(s[::-1])         # Obtain position of first number in reversed string.
     if start is None:
         return None, None
-    return len(s) - end -1, len(s) - start -1
+    return len(s) - end - 1, len(s) - start - 1
 
 
 def first_10_or_more(s: str) -> (int, int):
@@ -73,40 +75,39 @@ def first_10_or_more(s: str) -> (int, int):
                 if start_num == end_num:        # 1 digit number, so restart the search.
                     start_num, end_num = None, None
 
-
     # Deal with all digits string case.
     if start_num is not None and end_num is None:
         end_num = len(s) - 1
         if start_num == end_num:  # 1 digit number.
-            return (None, None)
+            return None, None
 
     return start_num, end_num
 
 
-def begin_explode(l, depth: int) -> (list, int, int):
+def begin_explode(num, depth: int) -> (list, int, int):
 
-    if type(l) == int:
-        return (l, 0, 0)
+    if type(num) == int:
+        return num, None, None
 
     if depth == 4:
-        left = l[0]
-        right = l[1]
-        return ('X', left, right)
+        left = num[0]
+        right = num[1]
+        return 'X', left, right
 
-    left = l[0]
-    right = l[1]
+    left = num[0]
+    right = num[1]
 
     stop_exploding = False
 
     inside_left, add_left, add_right = begin_explode(left, depth + 1)
-    if add_left != 0 or add_right != 0:
+    if add_left is not None or add_right is not None:
         stop_exploding = True
 
     inside_right = right
     if not stop_exploding:
         inside_right, add_left, add_right = begin_explode(right, depth + 1)
 
-    return ([inside_left, inside_right], add_left, add_right)
+    return [inside_left, inside_right], add_left, add_right
 
 
 def add_to_first_num(s: str, add_on: int) -> str:
@@ -176,22 +177,22 @@ def add(s1: str, s2: str) -> str:
     return reduce('[' + s1 + ',' + s2 + ']')
 
 
-def magnitude(l) -> int:
-    if type(l) == int:
-        return l
+def magnitude(num) -> int:
+    if type(num) == int:
+        return num
 
-    left = l[0]
-    right = l[1]
+    left = num[0]
+    right = num[1]
     return 3 * magnitude(left) + 2 * magnitude(right)
 
 
 assert str_to_list('[1,2]') == [1, 2]
 assert str_to_list('[[1,2],3]') == [[1, 2], 3]
 assert str_to_list('[9,[8,7]]') == [9, [8, 7]]
-assert str_to_list('[[1,9],[8,5]]') == [[1, 9],[8, 5]]
-assert str_to_list('[[[[1,2],[3,4]],[[5,6],[7,8]]],9]') == [[[[1,2],[3,4]],[[5,6],[7,8]]],9]
-assert str_to_list('[[[9,[3,8]],[[0,9],6]],[[[3,7],[4,9]],3]]') == [[[9,[3,8]],[[0,9],6]],[[[3,7],[4,9]],3]]
-assert str_to_list('[[[[1,3],[5,3]],[[1,3],[8,7]]],[[[4,9],[6,9]],[[8,2],[7,3]]]]') == [[[[1,3],[5,3]],[[1,3],[8,7]]],[[[4,9],[6,9]],[[8,2],[7,3]]]]
+assert str_to_list('[[1,9],[8,5]]') == [[1, 9], [8, 5]]
+assert str_to_list('[[[[1,2],[3,4]],[[5,6],[7,8]]],9]') == [[[[1, 2], [3, 4]], [[5, 6], [7, 8]]], 9]
+assert str_to_list('[[[9,[3,8]],[[0,9],6]],[[[3,7],[4,9]],3]]') == [[[9, [3, 8]], [[0, 9], 6]], [[[3, 7], [4, 9]], 3]]
+assert str_to_list('[[[[1,3],[5,3]],[[1,3],[8,7]]],[[[4,9],[6,9]],[[8,2],[7,3]]]]') == [[[[1, 3], [5, 3]], [[1, 3], [8, 7]]], [[[4, 9], [6, 9]], [[8, 2], [7, 3]]]]
 
 assert list_to_str([1, 2]) == '[1,2]'
 assert list_to_str([[[[1, 2], [3, 4]], [[5, 6], [7, 8]]], 9]) == '[[[[1,2],[3,4]],[[5,6],[7,8]]],9]'
@@ -241,23 +242,30 @@ assert add('[[[[4,3],4],4],[7,[[8,4],9]]]', '[1,1]') == reduce('[[[[[4,3],4],4],
 assert add('[[[0,[4,5]],[0,0]],[[[4,5],[2,6]],[9,5]]]', '[7,[[[3,7],[4,3]],[[6,3],[8,8]]]]') == '[[[[4,0],[5,4]],[[7,7],[6,0]]],[[8,[7,7]],[[7,9],[5,0]]]]'
 assert add('[[[[4,0],[5,4]],[[7,7],[6,0]]],[[8,[7,7]],[[7,9],[5,0]]]]', '[[2,[[0,8],[3,4]]],[[[6,7],1],[7,[1,6]]]]') == '[[[[6,7],[6,7]],[[7,7],[0,7]]],[[[8,7],[7,7]],[[8,8],[8,0]]]]'
 
-assert magnitude(42) == 42
-assert magnitude([9,1]) == 29
-assert magnitude([[9,1],[1,9]]) == 129
-assert magnitude([[1,2],[[3,4],5]]) == 143
-assert magnitude([[[[8,7],[7,7]],[[8,6],[7,7]]],[[[0,7],[6,6]],[8,7]]]) == 3488
+assert magnitude([9, 1]) == 29
+assert magnitude([[9, 1], [1, 9]]) == 129
+assert magnitude([[1, 2], [[3, 4], 5]]) == 143
+assert magnitude([[[[8, 7], [7, 7]], [[8, 6], [7, 7]]], [[[0, 7], [6, 6]], [8, 7]]]) == 3488
 
 f = open('input.txt')
 t = f.read()
 f.close()
 
+numbers = []
 so_far = None
 for line in t.split('\n'):
-    print(so_far, line)
+    numbers.append(line)
+    # print(so_far, line)
     if so_far is None:
         so_far = line
     else:
         so_far = add(so_far, line)
 
-print(magnitude(str_to_list(so_far)))
+print('Part 1:', magnitude(str_to_list(so_far)))
 
+largest = 0
+for n1, n2 in permutations(numbers, 2):
+    m = magnitude(str_to_list(add(n1, n2)))
+    largest = max(largest, m)
+
+print('Part 2:', largest)
