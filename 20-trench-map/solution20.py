@@ -29,7 +29,7 @@ class Image:
 
     def print_image(self):
         for y in range(self.min_y, self.max_y + 1):
-            for x in range(self.min_x, self.max_x +  1):
+            for x in range(self.min_x, self.max_x + 1):
                 print(self.pixel(x, y), end='')
             print()
         print()
@@ -41,7 +41,7 @@ class Image:
     def pixel_coord_to_denary(self, x, y) -> int:
         """For pixel at parm coords. Return the denary value for the 3x3 grid around it."""
         pixel_str = ''
-        for yi in range(y -1, y + 2):
+        for yi in range(y - 1, y + 2):
             for xi in range(x - 1, x + 2):
                 pixel_str += self.pixel(xi, yi)
 
@@ -70,7 +70,6 @@ class Image:
         self.background = self.denery_enhance(algo, background_denary)
 
         self.grid = new_grid
-
 
     def count_lit(self) -> int:
         count = 0
