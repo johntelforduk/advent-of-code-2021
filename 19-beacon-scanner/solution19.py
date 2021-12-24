@@ -1,16 +1,16 @@
 # Solution to day 19 of AOC 2021, Beacon Scanner
 # https://adventofcode.com/2021/day/19
 
-from itertools import permutations
+from itertools import permutations, combinations
 
 
-def pick_term(xp:int, yp:int, zp:int, option:str) -> int:
+def pick_term(xp: int, yp: int, zp: int, option: str) -> int:
     """For parm tuple of (x, y, z) and option string like 'x" or '-z'. Return the number for the option term."""
     options_map = {'x': xp, 'y': yp, 'z': zp, '-x': -xp, '-y': -yp, '-z': -zp}
     return options_map[option]
 
 
-def make_variant(s: list, xo: str, yo:str, zo: str) -> list:
+def make_variant(s: list, xo: str, yo: str, zo: str) -> list:
     return [(pick_term(xi, yi, zi, xo), pick_term(xi, yi, zi, yo), pick_term(xi, yi, zi, zo)) for xi, yi, zi in s]
 
 
@@ -45,8 +45,8 @@ def variations(s: list) -> list:
 def find_matches(t1: list, t1x: int, t1y: int, t1z: int, t2: list) -> (set, int, int, int):
     """For the 2 parm lists of coordinate tuples (x, y, z).
     t1x, t1y, t1z is the offset of t1 from beacon zero's origin.
-    Try every combination of coordinates as anchors. Return
-    the set of matching coordinates for whichever pair of anchors has 12 or more matches.
+    Try every combination of coordinates as anchors.
+    Return the set of matching coordinates for whichever pair of anchors has 12 or more matches.
     't' is for list of coordinate to be TESTED for matches."""
 
     for (xa1, ya1, za1) in t1:          # Every coordinate in the list is a potential anchor. 'a' is for anchor.
@@ -59,9 +59,6 @@ def find_matches(t1: list, t1x: int, t1y: int, t1z: int, t2: list) -> (set, int,
 
             test_match = set()
 
-            # t1_matches = set()
-            # t2_matches = set()
-
             match_count = 0
 
             for (xt, yt, zt) in t2:
@@ -71,18 +68,23 @@ def find_matches(t1: list, t1x: int, t1y: int, t1z: int, t2: list) -> (set, int,
 
                 test_match.add((t1x + x_shifted, t1y + y_shifted, t1z + z_shifted))
                 if (x_shifted, y_shifted, z_shifted) in t1:
-                    # t1_matches.add((x_shifted, y_shifted, z_shifted))           # xxx
-                    # t2_matches.add((xt, yt, zt))
                     match_count += 1
 
             if match_count >= 12:
-                # print(match_count, sorted(test_match))
-                # print(match_count, sorted(t2_matches))
-                # print(xo, yo, zo)
                 return test_match, xo, yo, zo
 
-    return set(), 0, 0, 0                # Less than 12 matches found, so not a match.
+    return set(), 0, 0, 0                       # Less than 12 matches found, so not a match.
 
+
+def manhattan(t1b: tuple, t2b: tuple) -> int:
+    """For parm pair of coordinate tuples, each (x, y, z). Return the Manhattan distance between them."""
+    t1x, t1y, t1z = t1b
+    t2x, t2y, t2z = t2b
+
+    return abs(t1x - t2x) + abs(t1y - t2y) + abs(t1z - t2z)
+
+
+assert manhattan((1105, -1205, 1229), (-92, -2380, -20)) == 3621
 
 f = open('input.txt')
 t = f.read()
@@ -101,36 +103,17 @@ for scanner_raw in t.split('\n\n'):
         num += 1
     scanners.append(scanner)
 
-# all_variants = [[scanners[0]]]                  # Scanner 0 is never re-oriented, so we don't need to find its variants.
-# for scanner in scanners[1:]:                    # Skip variant 0, we added it to the list in line above.
-#     all_variants.append(variations(scanner))
-
 all_variants = [variations(scanner) for scanner in scanners]
 print(len(all_variants))
 
-# print(all_variants[0])
-# print(all_variants[1])
-
-# print(len(all_variants))
-# print(all_variants)
-
-# for s1, s2 in combinations(all_variants, 2):
-#     print(s1, s2)
-
-# beacons = set()
-
-# k = scanner number (it's position in the all_variants list).
-# v = tuple (variant_number, xo, yo, zo)
 matches = {0: (0, 0, 0, 0)}                    # Scanner 0 with default orientation is the anchor of the solution.
 
 # This is a hacky way to put the first scanner in the solution set of beacons.
 beacons, _, _, _ = find_matches(all_variants[0][0], 0, 0, 0, all_variants[0][0])
-# print(beacons)
 
-perms = list(permutations(range(len(scanners)), 2))           # Iterator containing tuples like (0, 0), (0, 1)... (5, 5).
+perms = list(permutations(range(len(scanners)), 2))     # Iterator containing tuples like (0, 0), (0, 1)... (5, 5).
 
-while len (matches) != len(all_variants):               # Keep looping until all scanners have been matched.
-    # print('go!')
+while len(matches) != len(all_variants):               # Keep looping until all scanners have been matched.
     for s1, s2 in perms:
         print(s1, s2, len(all_variants), len(matches))
         if s1 in matches and s2 not in matches:
@@ -140,7 +123,6 @@ while len (matches) != len(all_variants):               # Keep looping until all
 
             found = False
             s2_variant_num = 0
-            # while not found and s2_variant_num < len(s2_variants) - 1:
             while not found and s2_variant_num < len(s2_variants):
                 try_matches, tx, ty, tz = find_matches(s1_variant, x1, y1, z1, s2_variants[s2_variant_num])
 
@@ -150,7 +132,15 @@ while len (matches) != len(all_variants):               # Keep looping until all
                     beacons = beacons.union(try_matches)
                 s2_variant_num += 1
 
-# for x in sorted(list(beacons)):
-#     print(x)
+print('Part 1:', len(beacons))
 
-print(len(beacons))
+scanner_coords = []
+for scanner in matches:
+    _, scx, scy, scz = matches[scanner]
+    scanner_coords.append((scx, scy, scz))
+
+largest = 0
+for b1, b2 in combinations(scanner_coords, 2):
+    largest = max(largest, manhattan(b1, b2))
+
+print('Part 2:', largest)
