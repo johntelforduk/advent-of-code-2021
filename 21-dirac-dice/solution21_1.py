@@ -1,4 +1,4 @@
-# Solution to day part 1 of 21 of AOC 2021, Dirac Dice
+# Solution to part 1 of day 21 of AOC 2021, Dirac Dice
 # https://adventofcode.com/2021/day/21
 
 
