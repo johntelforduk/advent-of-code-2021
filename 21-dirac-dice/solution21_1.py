@@ -46,11 +46,6 @@ class Game:
             self.players[player_num].winner = True
 
 
-f = open('test.txt')
-t = f.read()
-f.close()
-
-
 test_die = Die()
 
 assert test_die.rolls == 0
