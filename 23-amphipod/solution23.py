@@ -2,6 +2,7 @@
 # https://adventofcode.com/2021/day/23
 
 import sys
+import queue
 
 
 def manhattan(t1b: tuple, t2b: tuple) -> int:
@@ -16,11 +17,12 @@ def dict_hash(di: dict):
     return hash(frozenset(di.items()))
     # return json.dumps(di)
 
-def add_extras(positions: dict, species: str, rank: int) -> list:
-    if positions[(rank, 3)] == species:
-        return [(rank, 2), (rank, 3)]
-    elif positions[(rank, 2)] == species:
-        return [(rank, 2)]
+
+def add_extras(positions: dict, species: str, column: int) -> list:
+    if positions[(column, 3)] == species:
+        return [(column, 2), (column, 3)]
+    elif positions[(column, 2)] == species:
+        return [(column, 2)]
     return []
 
 
@@ -78,17 +80,6 @@ class Burrow:
                             for c2 in hallway + c_extras:
                                 for d1 in hallway + d_extras:
                                     for d2 in hallway + d_extras:
-                                        # all = set()
-                                        # all.add(a1)
-                                        # all.add(a2)
-                                        # all.add(b1)
-                                        # all.add(b2)
-                                        # all.add(c1)
-                                        # all.add(c2)
-                                        # all.add(d1)
-                                        # all.add(d2)
-                                        # # if len(all) == 8:
-                                        # #     y += 1
 
                                         creatures = {}
                                         creatures[a1], creatures[a2] = 'A', 'A'
@@ -99,7 +90,7 @@ class Burrow:
                                         if len(creatures) == 8:         # Check that the 8 coordinates are disjoint.
                                             self.graph[dict_hash(creatures)] = creatures
 
-        assert dict_hash({(5, 2): 'C', (7, 2): 'B', (9, 2): 'D', (3, 3): 'A', (5, 3): 'D', (7, 3): 'C', (9, 3): 'A', (2, 1): 'B'}) in self.graph
+        # assert dict_hash({(5, 2): 'C', (7, 2): 'B', (9, 2): 'D', (3, 3): 'A', (5, 3): 'D', (7, 3): 'C', (9, 3): 'A', (2, 1): 'B'}) in self.graph
 
         edges_1_way = [(1, 1, 2, 1), (2, 1, 4, 1), (4, 1, 6, 1), (6, 1, 8, 1), (8, 1, 10, 1), (10, 1, 11, 1),
 
@@ -124,18 +115,6 @@ class Burrow:
                 self.edges[(xo, yo)] = [(xd, yd)]
 
         self.energy = 0             # Total energy used so far.
-        # self.moves = 0
-
-        # k = Tuple (x, y), the position of the creature.
-        # v = species of creature ('A'... 'D').
-
-
-        # self.amphipods_history = []
-
-    # def reset(self):
-    #     self.energy = 0             # Total energy used so far.
-    #     self.amphipods = self.amphipods_start.copy()
-    #     self.home = []
 
     def create_amphipod(self, species: str, position: (int, int)):
         self.amphipods[position] = species
@@ -219,18 +198,6 @@ class Burrow:
         energy_per_step = {'A': 1, 'B': 10, 'C': 100, 'D': 1000}[species]
         return energy_per_step * manhattan(origin, destination)
 
-
-
-
-
-
-    # def validated_move(self, origin: (int, int), destination: (int, int)):
-    #     if destination not in self.possible_moves(origin):
-    #         print('Invalid move!')
-    #     else:
-    #         self.move(origin, destination)
-
-
     def print_burrow(self):
         graphic = """#############
 #...........#
@@ -268,7 +235,10 @@ class Burrow:
 
         #
         # create vertex set Q
-        q, dist = {}, {}
+        pq = queue.PriorityQueue()
+
+        q = set()
+        dist = {}
         # for each vertex v in Graph:
         for v_hash in self.graph:
             # dist[v] ← INFINITY
@@ -279,133 +249,80 @@ class Burrow:
 
 
             # XXXXXXXX
-            # q[v_hash] = dist[v_hash]
 
+            if v_hash != source_hash:
+                pq.put((dist[v_hash], v_hash))
+                q.add(v_hash)
 
         # dist[source] ← 0
         dist[source_hash] = 0
-        q[source_hash] = 0
+        q.add(source_hash)
+        pq.put((dist[source_hash], source_hash))
 
         # while Q is not empty:
-        while len(q) is not 0:
+        while not pq.empty():
 
             # for i in dist:
             #     if dist[i] != sys.maxsize:
             #         print(i, self.graph[i], dist[i])
-            print('len(q):', len(q))
+            print('pq.qsize(), len(q):', pq.qsize(), len(q))
 
             # u ← vertex in Q with min dist[u]
-            u = min(q, key=q.get)
+            # u = min(q, key=q.get)
+            _, u = pq.get()
             # print(u)
 
-            # print('u', u)
+            # XXXXXXXX
+            # if d <= dist[u]:
+                # print('u', u)
 
             # remove u from Q
-            del q[u]
+            if u in q:
+                q.remove(u)
 
-            # for each neighbor v of u still in Q:
-            # x, y = u
-            u_positions = self.graph[u]
+                # for each neighbor v of u still in Q:
+                # x, y = u
+                u_positions = self.graph[u]
 
-            for u_creature in u_positions:
-                species = u_positions[u_creature]
-                for pick_move in self.possible_moves(u_creature, u_positions):
+                for u_creature in u_positions:
+                    species = u_positions[u_creature]
+                    for pick_move in self.possible_moves(u_creature, u_positions):
 
-                    v_positions = u_positions.copy()
-                    del v_positions[u_creature]
-                    v_positions[pick_move] = species
+                        v_positions = u_positions.copy()
+                        del v_positions[u_creature]
+                        v_positions[pick_move] = species
 
-                    v_hash = dict_hash(v_positions)
+                        v_hash = dict_hash(v_positions)
 
-                    # print('u_creature', u_creature)
-                    # print('pick_move', pick_move)
-                    # print('species', species)
-                    # print('u_positions', u_positions)
-                    # print('v_positions', v_positions)
+                        # print('u_creature', u_creature)
+                        # print('pick_move', pick_move)
+                        # print('species', species)
+                        # print('u_positions', u_positions)
+                        # print('v_positions', v_positions)
 
-                    if v_hash in q:
+                        if v_hash in q:
 
-                        # alt ← dist[u] + length(u, v)
-                        # alt = dist[u] + cavern[v]
-                        # print('dist[u]', dist[u])
-                        # print('distance', self.distance(u_creature, pick_move, u_positions))
+                            # alt ← dist[u] + length(u, v)
+                            # alt = dist[u] + cavern[v]
+                            # print('dist[u]', dist[u])
+                            # print('distance', self.distance(u_creature, pick_move, u_positions))
 
-                        alt = dist[u] + self.distance(u_creature, pick_move, u_positions)
-                        # print('alt', alt)
+                            alt = dist[u] + self.distance(u_creature, pick_move, u_positions)
+                            # print('alt', alt)
 
-                        # if alt < dist[v]:
-                        if alt < dist[v_hash]:
-                            # dist[v] ← alt
-                            dist[v_hash] = alt
-                            if v_hash in q:
-                                q[v_hash] = alt
-                            # prev[v] ← u
-                            # prev[v_hash] = u
+                            # if alt < dist[v]:
+                            if alt < dist[v_hash]:
+                                # dist[v] ← alt
+                                dist[v_hash] = alt
 
-                    elif dist[v_hash] == sys.maxsize:       # New node found - add to queue.
-                        q[v_hash] = sys.maxsize
+                                if v_hash in q:
+                                    pq.put((alt, v_hash))
+                                # prev[v] ← u
+                                # prev[v_hash] = u
 
         # return dist[], prev[]
-
         print(dist[self.all_home_hash])
 
-
-# def search(tb: Burrow):
-#     global best
-#     global best_so_far
-#
-#     # tb.print_burrow()
-#
-#     # If all of the creatures are home, then we are done!
-#     if len(tb.home) == len(tb.amphipods):
-#         if tb.energy < best:
-#             best = tb.energy
-#             print(best)
-#         return
-#
-#     # If we've exceeded the best energy total already, there's no need to continue the search.
-#     if tb.energy >= best:
-#         return
-#
-#     # Infeasible number of moves. Also must be less than Python recursion limits.
-#     if tb.moves > 200:
-#         return
-#
-#     # If all creatures are stuck, abandon the search.
-#     stuck = True
-#     for pick_creature in tb.amphipods:
-#         if len(tb.possible_moves(pick_creature)) > 0:
-#             stuck = False
-#     if stuck:
-#         return
-#
-#     hash_key = hash(frozenset(tb.amphipods.items()))
-#     # print('len(best_so_far):', len(best_so_far))
-#     if hash_key in best_so_far:
-#         if tb.energy <= best_so_far[hash_key]:
-#             best_so_far[hash_key] = tb.energy
-#         else:
-#             return
-#     else:
-#         best_so_far[hash_key] = tb.energy
-#
-#     # TODO For each creature in turn, do it's next move.
-#     crs = list(tb.amphipods)
-#     random.shuffle(crs)
-#     for pick_creature in crs:
-#         if pick_creature not in tb.home:
-#             pms = tb.possible_moves(pick_creature)
-#             random.shuffle(pms)
-#             for pick_move in pms:
-#                 nb = Burrow()
-#                 nb.energy = tb.energy
-#                 nb.moves = tb.moves
-#                 nb.amphipods = tb.amphipods.copy()
-#                 nb.amphipods_start = tb.amphipods_start.copy()
-#                 nb.home = tb.home.copy()
-#
-#                 nb.move(pick_creature, pick_move)
-#                 search(nb)
 
 assert manhattan((3, 2), (2, 1)) == 2
 assert manhattan((2, 1), (3, 2)) == 2
@@ -418,116 +335,10 @@ assert dict_hash({(3, 2): 'A', (3, 3): 'B'}) == dict_hash({(3, 3): 'B', (3, 2): 
 assert dict_hash({(3, 2): 'A', (3, 3): 'B'}) != dict_hash({(3, 2): 'A', (3, 4): 'B'})   # Change a key.
 assert dict_hash({(3, 2): 'A', (3, 3): 'B'}) != dict_hash({(3, 2): 'A', (3, 3): 'C'})   # Change a value.
 
-f = open('test.txt')
+f = open('input.txt')
 t = f.read()
 f.close()
 
 my_burrow = Burrow(diagram=t)
 my_burrow.print_burrow()
 my_burrow.search()
-
-# my_burrow.amphipods_start = my_burrow.amphipods.copy()
-
-# # (1, 1)  (2, 1)      (4, 1)      (6, 1)      (8, 1)      (10, 1)  (11, 1)
-# #               (3, 2)      (5, 2)      (7, 2)      (9, 2)
-# #               (3, 3)      (5, 3)      (7, 3)      (9, 3)
-#
-# my_burrow.validated_move((7, 2), (6, 1))
-# my_burrow.validated_move((6, 1), (4, 1))
-# my_burrow.print_burrow()
-# my_burrow.validated_move((5, 2), (6, 1))
-# my_burrow.validated_move((6, 1), (7, 2))
-# my_burrow.print_burrow()
-# my_burrow.validated_move((5, 3), (5, 2))
-# my_burrow.validated_move((5, 2), (6, 1))
-# my_burrow.validated_move((4, 1), (5, 2))
-# my_burrow.validated_move((5, 2), (5, 3))
-# my_burrow.print_burrow()
-# my_burrow.validated_move((3, 2), (4, 1))
-# my_burrow.validated_move((4, 1), (5, 2))
-# my_burrow.print_burrow()
-# my_burrow.validated_move((9, 2), (8, 1))
-# my_burrow.validated_move((9, 3), (9, 2))
-# my_burrow.validated_move((9, 2), (10, 1))
-# my_burrow.print_burrow()
-# my_burrow.validated_move((8, 1), (9, 2))
-# my_burrow.validated_move((9, 2), (9, 3))
-# my_burrow.validated_move((6, 1), (8, 1))
-# my_burrow.validated_move((8, 1), (9, 2))
-# my_burrow.print_burrow()
-# my_burrow.validated_move((10, 1), (8, 1))
-# my_burrow.validated_move((8, 1), (6, 1))
-# my_burrow.validated_move((6, 1), (4, 1))
-# my_burrow.validated_move((4, 1), (3, 2))
-# my_burrow.print_burrow()
-# assert my_burrow.energy == 12521
-#
-# my_burrow.reset()
-#
-# best_so_far = {}
-#
-# best = 50000            # This should be an easy best score to beat.
-# search(my_burrow)
-# print(best)
-
-# my_burrow.print_burrow()
-
-# best = None
-#
-# best_so_far = {}
-#
-# for attempt in range(50000000):
-#     my_burrow.reset()
-#
-#     if (attempt % 1000) == 0:
-#         print('Attempt, Best:', attempt, best)
-#
-#
-#     stuck, poor = False, False
-#     while len(my_burrow.home) < 8 and not stuck and not poor:              # 8 home means we are done.
-#
-#         stuck = True
-#         for pick_creature in my_burrow.amphipods:
-#             if len(my_burrow.possible_moves(pick_creature)) > 0:
-#                 stuck = False
-#
-#         if not stuck:
-#             pick_creature, next_moves = (0, 0), []
-#             while len(next_moves) == 0 or pick_creature in my_burrow.home:
-#                 pick_creature = random.choice(list(my_burrow.amphipods))
-#                 next_moves = my_burrow.possible_moves(pick_creature)
-#                 # print(pick_creature, next_moves)
-#
-#             pick_move = random.choice(next_moves)
-#             # print(pick_creature, next_moves, pick_move)
-#
-#             my_burrow.move(pick_creature, pick_move)
-#             # my_burrow.print_burrow()
-#
-#         hash_key = hash(frozenset(my_burrow.amphipods.items()))
-#         # print('len(best_so_far):', len(best_so_far))
-#         if hash_key in best_so_far:
-#             if my_burrow.energy <= best_so_far[hash_key]:
-#                 best_so_far[hash_key] = my_burrow.energy
-#             else:
-#                 poor = True
-#         else:
-#             best_so_far[hash_key] = my_burrow.energy
-#
-#         if best is not None and my_burrow.energy > best:
-#             poor = True
-#
-#     if not stuck and not poor:
-#         if best is None:
-#             best = my_burrow.energy
-#             print('Attempt, Best:', attempt, best)
-#         else:
-#             if my_burrow.energy < best:
-#                 best = my_burrow.energy
-#                 print('Attempt, Best:', attempt, best)
-
-# print(my_burrow.possible_moves((3, 3)))
-#
-# my_burrow.move((3, 2), (2, 1))
-#
-# my_burrow.print_burrow()
