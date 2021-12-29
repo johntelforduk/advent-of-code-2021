@@ -276,7 +276,12 @@ class Burrow:
             # # prev[v] ← UNDEFINED
             # prev[v_hash] = None
             # add v to Q
-            q[v_hash] = dist[v_hash]
+
+
+            # XXXXXXXX
+            # q[v_hash] = dist[v_hash]
+
+
         # dist[source] ← 0
         dist[source_hash] = 0
         q[source_hash] = 0
@@ -336,6 +341,9 @@ class Burrow:
                                 q[v_hash] = alt
                             # prev[v] ← u
                             # prev[v_hash] = u
+
+                    elif dist[v_hash] == sys.maxsize:       # New node found - add to queue.
+                        q[v_hash] = sys.maxsize
 
         # return dist[], prev[]
 
